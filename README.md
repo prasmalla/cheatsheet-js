@@ -42,16 +42,16 @@ A super condensed JavaScript reference for [Watch and Code](https://watchandcode
 
 # Understanding `this`
 
-There isn't a single word that describes `this` well, so I just think of it as a special variable that changes depending on the situation. Those different situations are captured below.
+There isn't a single word that describes `this` well, so I just think of it as a special variable or more specifically javascript calls it an _"implicit parameter"_. This value changes depending on the how and where the code is being ran. Those different situations are captured below.
 
-### Case 1: In a regular function (or if you're not in a function at all), `this` points to `window`. This is the default case.
+### Case 1: In a regular function (or if you're not in a function at all), `this` points to the `window` object when you are running your code in the browser. If you are running your code in Node `this` will point to the `global` object. This is the default case.
 
 ```javascript
 function logThis() {
   console.log(this);
 }
 
-logThis(); // window
+logThis(); // window || global
 
 // In strict mode, `this` will be `undefined` instead of `window`. 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode
@@ -85,14 +85,14 @@ myObject.myMethod(); // myObject
 
 ```
 
-### Case 3: In a function that's being called as a constructor, `this` points to the object that the constructor is creating.
+### Case 3: In a function that's being called as a constructor (using the `new` keyword), `this` points to the object that is automatically created by the `new` keyword and subsequently returned from the constructor function.
 
 ```javascript
 function Person(name) {
   this.name = name;
 }
 
-var gordon = new Person('gordon');
+var gordon = new Person('gordon'); // <-- notice the use of the new keyword
 console.log(gordon); // {name: 'gordon'}
 ```
 
@@ -134,7 +134,7 @@ function logThis() {
  * Case 1: The regular old default case.
  */
  
-outerFunction(logThis); // window
+outerFunction(logThis); // window || global
 
 /*
  * Case 2: Call the callback as a method
@@ -177,4 +177,45 @@ callAndBindToGordon(logThis); // {name: 'Gordon'}
 // In a twist, we give `callAndBindToGordon` a function that's already been bound.
 var boundOnce = logThis.bind({name: 'The first time is forever'});
 callAndBindToGordon(boundOnce); // {name: 'The first time is forever'}
+```
+
+### Case 6: ES6 Arrow functions 😲
+#### Arrow functions behave a little differently than regular function declarations or functions expressions when it comes to the `this` implicit parameter. Mainly... arrow functions don't have an implicit `this` parameter 😅🤔. Arrow functions receive their value of `this` lexically just like any other value in Javascript. 
+
+#### Another way to think about it is that in all the rules about `this` above, the value of `this` was defined at run time (when the function was called)
+
+```javascript
+
+// when we define the function the value of this is not yet defined
+function foo (){
+  console.log (this);
+};
+
+const myObject = {
+  myMethod : foo
+}
+
+// here, when we invoke "myMethod" the "this" rules take effect and its value is defined
+myObject.myMethod();
+
+// you can almost think of it as looking like this under the hook in JS
+myObject.myMethod(this = myObject);
+
+```
+
+#### HOWEVER, when using ES6 Arrow functions the value of `this` is determined lexically and time you define your function
+
+```javascript
+const foo = ()=>{
+  console.log(this);
+};
+
+const myObject = {
+  myMethod: foo
+};
+
+// since there is no implicit "this" and out function is trying to log "this" to the console, JS is going to keep looking outward and outward in scope for the first reference to "this" it can find. In the example here there is not value of "this" so javascript uses it's default value of window or global.
+myObject.myMethod();
+
+
 ```
